@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="خَيّو الحمصي">
-  <title>المساعد الحمصي (مجاني بـ Gemini)</title>
+  <title>خَيّو الحمصي - صوت نقي</title>
   <style>
     :root {
       --primary: #059669;
@@ -61,10 +61,31 @@
       border: 2px solid var(--primary);
     }
 
-    .title-group h1 { font-size: 17px; font-weight: 700; }
+    .title-group h1 { font-size: 16px; font-weight: 700; }
     .title-group p { font-size: 12px; color: #6b7280; }
 
-    .header-actions { display: flex; gap: 4px; }
+    .header-actions { display: flex; gap: 6px; align-items: center; }
+
+    .voice-toggle-btn {
+      background: #ecfdf5;
+      color: var(--primary);
+      border: 1px solid #a7f3d0;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .voice-toggle-btn.muted {
+      background: #f3f4f6;
+      color: #9ca3af;
+      border-color: #d1d5db;
+    }
+
     .btn-icon {
       background: none;
       border: none;
@@ -231,12 +252,16 @@
       <div class="avatar">🏛️</div>
       <div class="title-group">
         <h1>أبو عبدو الحمصي</h1>
-        <p>مساعدك المجاني.. على راسي يا خاي</p>
+        <p>مساعدك ورفيقك الصادق</p>
       </div>
     </div>
     <div class="header-actions">
+      <!-- زر التحكم البسيط بتشغيل/كتم الصوت -->
+      <button class="voice-toggle-btn" id="voice-btn">
+        <span id="voice-icon">🔊</span>
+        <span id="voice-text">الصوت شغال</span>
+      </button>
       <button class="btn-icon" id="settings-btn" title="تعديل المفتاح">⚙️</button>
-      <button class="btn-icon" id="toggle-voice-btn" title="الصوت">🔊</button>
     </div>
   </header>
 
@@ -248,18 +273,17 @@
     <button class="action-btn btn-send" id="send-btn">➤</button>
   </footer>
 
-  <!-- نافذة إدخال مفتاح Gemini المجاني -->
   <div class="modal" id="api-modal">
     <div class="modal-content">
       <h2>مفتاح Gemini المجاني 🔑</h2>
-      <p>حط مفتاحك من Google AI Studio المجاني (بيبدأ بـ AIzaSy..). رح ينحفظ بآيفونك فقط ومجاني 100%.</p>
+      <p>حط مفتاحك من Google AI Studio (بيبدأ بـ AIzaSy..). رح ينحفظ بجهازك فقط ومجاني بالكامل.</p>
       
       <div class="input-group">
         <input type="password" id="api-key-input" placeholder="AIzaSy...">
       </div>
       
       <div class="modal-btns">
-        <button class="btn-primary" id="save-key-btn">حفظ وتوكلنا على الله</button>
+        <button class="btn-primary" id="save-key-btn">حفظ ومتابعة</button>
         <button class="btn-secondary" id="cancel-key-btn" style="display:none;">إلغاء</button>
       </div>
     </div>
@@ -268,24 +292,141 @@
   <script>
     const API_STORAGE_KEY = "homsi_gemini_api_key";
     const CHAT_HISTORY_KEY = "homsi_gemini_history";
+    const VOICE_PREF_KEY = "homsi_voice_enabled";
 
     let apiKey = localStorage.getItem(API_STORAGE_KEY) || "";
-    // المحادثات السابقة
     let conversation = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY)) || [];
+    let voiceEnabled = localStorage.getItem(VOICE_PREF_KEY) !== "false";
 
-    // التوجيه العام للهجة الحمصية
-    const SYSTEM_PROMPT = `أنت رفيق حمصي أصيل ومساعد شخصي ودود جداً، بتحكي بالعامية السورية وباللهجة الحمصية تحديداً (يا خاي، لك عيني، على راسي، شو مشان، يا بعدي، تسلملي، حلاوة الجبن، شبنا يا زلمة). 
+    const SYSTEM_PROMPT = `أنت رفيق حمصي أصيل ومساعد شخصي ودود، بتحكي بالعامية السورية وباللهجة الحمصية تحديداً (يا خاي، لك عيني، على راسي، شو مشان، يا بعدي، تسلملي، حلاوة الجبن، شبنا يا زلمة). 
 أسلوبك دافئ، عفوي، ومحترم ومرح.
 مهمتك:
-1. تجاوب المستخدم كصديق مقرب وتقدم له النصيحة والمساعدة.
+1. تجاوب المستخدم كصديق مقرب.
 2. تتذكر كل شي بيحكيه عن حاله (اسمه، شغله، أكلاته المفضلة، تفاصيل حياته).
 3. تسأله كل فترة سؤال لطيف لتتعرف عليه أكتر.
-4. حافظ على ردود معتدلة ومريحة لتنسمع بالصوت.`;
+4. الردود تكون مختصرة وطبيعية بدون رموز ماركداون (بدون نجوم ** أو شخاطات) لتطلع القراءة الصوتية ناعمة ونقية.`;
 
     function saveHistory() {
       localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(conversation));
     }
 
+    // ---------- نظام الصوت المحسّن (Google Arabic Audio + Fallback) ----------
+    let currentAudio = null;
+    const voiceBtn = document.getElementById("voice-btn");
+    const voiceIcon = document.getElementById("voice-icon");
+    const voiceText = document.getElementById("voice-text");
+
+    function updateVoiceButtonUI() {
+      if (voiceEnabled) {
+        voiceBtn.classList.remove("muted");
+        voiceIcon.textContent = "🔊";
+        voiceText.textContent = "الصوت شغال";
+      } else {
+        voiceBtn.classList.add("muted");
+        voiceIcon.textContent = "🔇";
+        voiceText.textContent = "الصوت مطفي";
+      }
+    }
+
+    voiceBtn.addEventListener("click", () => {
+      voiceEnabled = !voiceEnabled;
+      localStorage.setItem(VOICE_PREF_KEY, voiceEnabled);
+      updateVoiceButtonUI();
+      stopAllAudio();
+    });
+
+    function stopAllAudio() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    // تنظيف النص تماماً من أي رموز تعرقل القراءة
+    function sanitizeForSpeech(raw) {
+      return raw
+        .replace(/[*#_~`>\[\]\(\)\\]/g, '') // إزالة كل رموز الماركداون
+        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '') // إزالة الإيموجي
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    // قراءة الرد كاملاً بدون تقطيع
+    function playSpeech(text) {
+      if (!voiceEnabled) return;
+      stopAllAudio();
+
+      const cleanText = sanitizeForSpeech(text);
+      if (!cleanText) return;
+
+      // تجزئة النص إلى مقاطع قصيرة تناسب نبرة الصوت وتمنع انقطاعه في سفاري
+      const chunks = [];
+      const parts = cleanText.split(/([.،؟!؟\n]+)/);
+      let temp = "";
+
+      for (let i = 0; i < parts.length; i++) {
+        temp += parts[i];
+        if (temp.length > 80 || i === parts.length - 1) {
+          if (temp.trim()) chunks.push(temp.trim());
+          temp = "";
+        }
+      }
+
+      let chunkIndex = 0;
+
+      function playNextChunk() {
+        if (!voiceEnabled || chunkIndex >= chunks.length) {
+          currentAudio = null;
+          return;
+        }
+
+        const chunk = chunks[chunkIndex++];
+        
+        // المحاولة الأولى: استخدام صوت جوجل العربي الصافي (Google Voice Engine)
+        const googleVoiceUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+        
+        currentAudio = new Audio(googleVoiceUrl);
+        currentAudio.onended = playNextChunk;
+        
+        currentAudio.onerror = () => {
+          // المحاولة الاحتياطية المتقدمة: استخدام صوت الآيفون بعد تقسيمه لتفادي مشكلة الـ 10 ثواني
+          fallbackNativeSpeech(chunk, playNextChunk);
+        };
+
+        currentAudio.play().catch(() => {
+          fallbackNativeSpeech(chunk, playNextChunk);
+        });
+      }
+
+      playNextChunk();
+    }
+
+    // مشغل بديل فائق السلاسة لمتصفح سفاري في حال عدم توفر الصوت الشبكي
+    function fallbackNativeSpeech(textChunk, onEndCallback) {
+      if (!('speechSynthesis' in window) || !voiceEnabled) {
+        if (onEndCallback) onEndCallback();
+        return;
+      }
+      
+      const utterance = new SpeechSynthesisUtterance(textChunk);
+      utterance.lang = 'ar-SA';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      const voices = window.speechSynthesis.getVoices();
+      const bestVoice = voices.find(v => v.lang.startsWith('ar') && (v.name.includes('Maged') || v.name.includes('Tarik') || v.name.includes('Laila') || v.name.includes('Siri')));
+      if (bestVoice) utterance.voice = bestVoice;
+
+      utterance.onend = onEndCallback;
+      utterance.onerror = onEndCallback;
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // ---------- إدارة المفتاح والنافذة ----------
     const apiModal = document.getElementById("api-modal");
     const apiKeyInput = document.getElementById("api-key-input");
     const saveKeyBtn = document.getElementById("save-key-btn");
@@ -308,7 +449,7 @@
       apiKey = val;
       localStorage.setItem(API_STORAGE_KEY, apiKey);
       apiModal.style.display = "none";
-      addBotMessage("يا مية أهلاً وسهلاً بعيوني! حفظنا المفتاح بجهازك ومجاناً ع الآخر.. قلي شو اسمك وشو حابب نسولف؟");
+      addBotMessage("يا مية أهلاً وسهلاً بعيوني! حفظنا المفتاح وضبطنا الصوت على أعلى وضوح.. قلي شو اسمك لنبلش نسولف؟");
     });
 
     settingsBtn.addEventListener("click", () => {
@@ -321,34 +462,7 @@
       apiModal.style.display = "none";
     });
 
-    // الصوت والنطق (TTS)
-    let voiceEnabled = true;
-    const synth = window.speechSynthesis;
-    const voiceBtn = document.getElementById("toggle-voice-btn");
-
-    function speakText(text) {
-      if (!voiceEnabled || !('speechSynthesis' in window)) return;
-      synth.cancel();
-
-      const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = 'ar-SA';
-      utterance.rate = 0.95;
-
-      const voices = synth.getVoices();
-      const arVoice = voices.find(v => v.lang.startsWith('ar'));
-      if (arVoice) utterance.voice = arVoice;
-
-      synth.speak(utterance);
-    }
-
-    voiceBtn.addEventListener("click", () => {
-      voiceEnabled = !voiceEnabled;
-      voiceBtn.textContent = voiceEnabled ? "🔊" : "🔇";
-      if (!voiceEnabled) synth.cancel();
-    });
-
-    // إدارة الدردشة
+    // ---------- واجهة الدردشة ----------
     const chatBox = document.getElementById("chat-box");
     const userInput = document.getElementById("user-input");
     const sendBtn = document.getElementById("send-btn");
@@ -365,10 +479,10 @@
 
     function addBotMessage(text) {
       addMessageToUI("bot", text);
-      speakText(text);
+      playSpeech(text);
     }
 
-    // إرسال لـ Gemini API المجاني
+    // ---------- إرسال الرسالة إلى Gemini ----------
     async function sendMessage() {
       const text = userInput.value.trim();
       if (!text) return;
@@ -378,10 +492,12 @@
         return;
       }
 
+      // إلغاء أي صوت شغال حالياً فور إرسال رسالة جديدة
+      stopAllAudio();
+
       addMessageToUI("user", text);
       userInput.value = "";
 
-      // حفظ رسالة المستخدم
       conversation.push({ role: "user", parts: [{ text: text }] });
       saveHistory();
 
@@ -392,11 +508,10 @@
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
-        // نستخدم موديل gemini-1.5-flash السريع والمجاني
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
         
         const payload = {
-          contents: conversation.slice(-12), // نرسل آخر رسائل للحفاظ على السياق
+          contents: conversation.slice(-12),
           systemInstruction: {
             parts: [{ text: SYSTEM_PROMPT }]
           }
@@ -412,7 +527,7 @@
         loadingBubble.remove();
 
         if (data.error) {
-          addBotMessage(`يا خاي في مشكلة بالمفتاح تبع جيميني: ${data.error.message}`);
+          addBotMessage(`يا خاي في مشكلة بمفتاح جيميني: ${data.error.message}`);
           return;
         }
 
@@ -433,7 +548,7 @@
       if (e.key === "Enter") sendMessage();
     });
 
-    // المايكروفون (STT)
+    // ---------- مايكروفون الآيفون ----------
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
@@ -455,13 +570,14 @@
     }
 
     window.onload = () => {
+      updateVoiceButtonUI();
       if (!apiKey) {
         checkApiKey();
       } else {
         if (conversation.length === 0) {
-          addBotMessage("يا مية أهلاً وسهلاً يا بعدي! نورت حمص العدية.. قلي شو اسمك وشو الأخبار عندك؟");
+          addBotMessage("يا مية أهلاً وسهلاً يا بعدي! نورت حمص.. قلي شو اسمك وشو الأخبار عندك؟");
         } else {
-          addBotMessage("يا مية مرحبا بخيي الغالي من جديد! شو في أخبار وقصص جديدة اليوم؟");
+          addBotMessage("يا مية مرحبا بخيي الغالي من جديد! طمني شو في قصص حلوة اليوم؟");
         }
       }
     };
