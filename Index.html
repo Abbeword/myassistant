@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="خَيّو الحمصي">
+  <title>المساعد الحمصي (مجاني بـ Gemini)</title>
+  <style>
+    :root {
+      --primary: #059669;
+      --bg-color: #f3f4f6;
+      --chat-user: #059669;
+      --chat-bot: #ffffff;
+      --text-dark: #1f2937;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    header {
+      background: #ffffff;
+      padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #e6f4ea;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      border: 2px solid var(--primary);
+    }
+
+    .title-group h1 { font-size: 17px; font-weight: 700; }
+    .title-group p { font-size: 12px; color: #6b7280; }
+
+    .header-actions { display: flex; gap: 4px; }
+    .btn-icon {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 6px;
+    }
+
+    #chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .bubble {
+      max-width: 82%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .bubble.bot {
+      align-self: flex-start;
+      background: var(--chat-bot);
+      border-bottom-right-radius: 4px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .bubble.user {
+      align-self: flex-end;
+      background: var(--chat-user);
+      color: #ffffff;
+      border-bottom-left-radius: 4px;
+    }
+
+    .bubble .time {
+      font-size: 10px;
+      opacity: 0.6;
+      display: block;
+      margin-top: 4px;
+      text-align: left;
+    }
+
+    footer {
+      background: #ffffff;
+      padding: 10px 12px calc(env(safe-area-inset-bottom) + 10px);
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #user-input {
+      flex: 1;
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 22px;
+      padding: 10px 16px;
+      font-size: 15px;
+      outline: none;
+      direction: rtl;
+    }
+
+    #user-input:focus {
+      border-color: var(--primary);
+      background: #fff;
+    }
+
+    .action-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .btn-send { background: var(--primary); color: white; }
+    .btn-mic { background: #e5e7eb; color: #374151; }
+    .btn-mic.recording {
+      background: #ef4444;
+      color: white;
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: #fff;
+      border-radius: 18px;
+      max-width: 380px;
+      width: 100%;
+      padding: 20px;
+    }
+
+    .modal-content h2 { font-size: 18px; margin-bottom: 8px; }
+    .modal-content p {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+
+    .input-group { margin-bottom: 15px; }
+    .input-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      direction: ltr;
+    }
+
+    .modal-btns { display: flex; gap: 8px; }
+    .btn-primary {
+      flex: 1;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #374151;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-info">
+      <div class="avatar">🏛️</div>
+      <div class="title-group">
+        <h1>أبو عبدو الحمصي</h1>
+        <p>مساعدك المجاني.. على راسي يا خاي</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" id="settings-btn" title="تعديل المفتاح">⚙️</button>
+      <button class="btn-icon" id="toggle-voice-btn" title="الصوت">🔊</button>
+    </div>
+  </header>
+
+  <div id="chat-box"></div>
+
+  <footer>
+    <button class="action-btn btn-mic" id="mic-btn" title="تسجيل صوتي">🎙️</button>
+    <input type="text" id="user-input" placeholder="احكي معي هون يا خاي..." autocomplete="off">
+    <button class="action-btn btn-send" id="send-btn">➤</button>
+  </footer>
+
+  <!-- نافذة إدخال مفتاح Gemini المجاني -->
+  <div class="modal" id="api-modal">
+    <div class="modal-content">
+      <h2>مفتاح Gemini المجاني 🔑</h2>
+      <p>حط مفتاحك من Google AI Studio المجاني (بيبدأ بـ AIzaSy..). رح ينحفظ بآيفونك فقط ومجاني 100%.</p>
+      
+      <div class="input-group">
+        <input type="password" id="api-key-input" placeholder="AIzaSy...">
+      </div>
+      
+      <div class="modal-btns">
+        <button class="btn-primary" id="save-key-btn">حفظ وتوكلنا على الله</button>
+        <button class="btn-secondary" id="cancel-key-btn" style="display:none;">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_STORAGE_KEY = "homsi_gemini_api_key";
+    const CHAT_HISTORY_KEY = "homsi_gemini_history";
+
+    let apiKey = localStorage.getItem(API_STORAGE_KEY) || "";
+    // المحادثات السابقة
+    let conversation = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY)) || [];
+
+    // التوجيه العام للهجة الحمصية
+    const SYSTEM_PROMPT = `أنت رفيق حمصي أصيل ومساعد شخصي ودود جداً، بتحكي بالعامية السورية وباللهجة الحمصية تحديداً (يا خاي، لك عيني، على راسي، شو مشان، يا بعدي، تسلملي، حلاوة الجبن، شبنا يا زلمة). 
+أسلوبك دافئ، عفوي، ومحترم ومرح.
+مهمتك:
+1. تجاوب المستخدم كصديق مقرب وتقدم له النصيحة والمساعدة.
+2. تتذكر كل شي بيحكيه عن حاله (اسمه، شغله، أكلاته المفضلة، تفاصيل حياته).
+3. تسأله كل فترة سؤال لطيف لتتعرف عليه أكتر.
+4. حافظ على ردود معتدلة ومريحة لتنسمع بالصوت.`;
+
+    function saveHistory() {
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(conversation));
+    }
+
+    const apiModal = document.getElementById("api-modal");
+    const apiKeyInput = document.getElementById("api-key-input");
+    const saveKeyBtn = document.getElementById("save-key-btn");
+    const cancelKeyBtn = document.getElementById("cancel-key-btn");
+    const settingsBtn = document.getElementById("settings-btn");
+
+    function checkApiKey() {
+      if (!apiKey) {
+        cancelKeyBtn.style.display = "none";
+        apiModal.style.display = "flex";
+      }
+    }
+
+    saveKeyBtn.addEventListener("click", () => {
+      const val = apiKeyInput.value.trim();
+      if (!val) {
+        alert("يا خاي حط المفتاح بالخانة أولاً");
+        return;
+      }
+      apiKey = val;
+      localStorage.setItem(API_STORAGE_KEY, apiKey);
+      apiModal.style.display = "none";
+      addBotMessage("يا مية أهلاً وسهلاً بعيوني! حفظنا المفتاح بجهازك ومجاناً ع الآخر.. قلي شو اسمك وشو حابب نسولف؟");
+    });
+
+    settingsBtn.addEventListener("click", () => {
+      apiKeyInput.value = apiKey;
+      cancelKeyBtn.style.display = "block";
+      apiModal.style.display = "flex";
+    });
+
+    cancelKeyBtn.addEventListener("click", () => {
+      apiModal.style.display = "none";
+    });
+
+    // الصوت والنطق (TTS)
+    let voiceEnabled = true;
+    const synth = window.speechSynthesis;
+    const voiceBtn = document.getElementById("toggle-voice-btn");
+
+    function speakText(text) {
+      if (!voiceEnabled || !('speechSynthesis' in window)) return;
+      synth.cancel();
+
+      const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'ar-SA';
+      utterance.rate = 0.95;
+
+      const voices = synth.getVoices();
+      const arVoice = voices.find(v => v.lang.startsWith('ar'));
+      if (arVoice) utterance.voice = arVoice;
+
+      synth.speak(utterance);
+    }
+
+    voiceBtn.addEventListener("click", () => {
+      voiceEnabled = !voiceEnabled;
+      voiceBtn.textContent = voiceEnabled ? "🔊" : "🔇";
+      if (!voiceEnabled) synth.cancel();
+    });
+
+    // إدارة الدردشة
+    const chatBox = document.getElementById("chat-box");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+    const micBtn = document.getElementById("mic-btn");
+
+    function addMessageToUI(sender, text) {
+      const bubble = document.createElement("div");
+      bubble.className = `bubble ${sender}`;
+      const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      bubble.innerHTML = `${text} <span class="time">${timeStr}</span>`;
+      chatBox.appendChild(bubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function addBotMessage(text) {
+      addMessageToUI("bot", text);
+      speakText(text);
+    }
+
+    // إرسال لـ Gemini API المجاني
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      if (!apiKey) {
+        checkApiKey();
+        return;
+      }
+
+      addMessageToUI("user", text);
+      userInput.value = "";
+
+      // حفظ رسالة المستخدم
+      conversation.push({ role: "user", parts: [{ text: text }] });
+      saveHistory();
+
+      const loadingBubble = document.createElement("div");
+      loadingBubble.className = "bubble bot";
+      loadingBubble.textContent = "عم فكر يا خاي... ⏳";
+      chatBox.appendChild(loadingBubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      try {
+        // نستخدم موديل gemini-1.5-flash السريع والمجاني
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        
+        const payload = {
+          contents: conversation.slice(-12), // نرسل آخر رسائل للحفاظ على السياق
+          systemInstruction: {
+            parts: [{ text: SYSTEM_PROMPT }]
+          }
+        };
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        loadingBubble.remove();
+
+        if (data.error) {
+          addBotMessage(`يا خاي في مشكلة بالمفتاح تبع جيميني: ${data.error.message}`);
+          return;
+        }
+
+        const reply = data.candidates[0].content.parts[0].text;
+        conversation.push({ role: "model", parts: [{ text: reply }] });
+        saveHistory();
+
+        addBotMessage(reply);
+
+      } catch (err) {
+        if (loadingBubble) loadingBubble.remove();
+        addBotMessage("صار مشكلة بالاتصال بالنت يا غالي، جرب كمان مرة.");
+      }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    userInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    // المايكروفون (STT)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ar-SY';
+      recognition.continuous = false;
+
+      recognition.onstart = () => micBtn.classList.add("recording");
+      recognition.onend = () => micBtn.classList.remove("recording");
+      recognition.onerror = () => micBtn.classList.remove("recording");
+
+      recognition.onresult = (e) => {
+        userInput.value = e.results[0][0].transcript;
+        sendMessage();
+      };
+
+      micBtn.addEventListener("click", () => {
+        try { recognition.start(); } catch (err) { recognition.stop(); }
+      });
+    }
+
+    window.onload = () => {
+      if (!apiKey) {
+        checkApiKey();
+      } else {
+        if (conversation.length === 0) {
+          addBotMessage("يا مية أهلاً وسهلاً يا بعدي! نورت حمص العدية.. قلي شو اسمك وشو الأخبار عندك؟");
+        } else {
+          addBotMessage("يا مية مرحبا بخيي الغالي من جديد! شو في أخبار وقصص جديدة اليوم؟");
+        }
+      }
+    };
+  </script>
+</body>
+</html>
