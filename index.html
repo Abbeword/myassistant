@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="خَيّو الحمصي">
-  <title>خَيّو الحمصي - gemini-flash-latest</title>
+  <meta name="apple-mobile-web-app-title" content="عبود">
+  <title>عبود - المساعد الصوتي</title>
   <style>
     :root {
-      --primary: #059669;
-      --bg-color: #f3f4f6;
-      --chat-user: #059669;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg-color: #f8fafc;
+      --chat-user: #2563eb;
       --chat-bot: #ffffff;
-      --text-dark: #1f2937;
+      --text-dark: #0f172a;
     }
 
     * {
@@ -32,15 +33,42 @@
       height: 100vh;
       height: 100dvh;
       overflow: hidden;
+      position: relative;
+      transition: background 0.4s ease;
+    }
+
+    /* الخلفية التفاعلية المستوحاة من Gemini Live */
+    .live-aura {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      background: radial-gradient(circle at 50% 105%, rgba(59, 130, 246, 0.28), rgba(147, 51, 234, 0.22), transparent 70%);
+    }
+
+    body.live-active .live-aura {
+      opacity: 1;
+      animation: pulse-aura 3.5s infinite alternate ease-in-out;
+    }
+
+    @keyframes pulse-aura {
+      0% { transform: scale(1); opacity: 0.5; }
+      100% { transform: scale(1.08); opacity: 0.85; }
     }
 
     header {
-      background: #ffffff;
-      padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+      position: relative;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: calc(env(safe-area-inset-top) + 10px) 16px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e2e8f0;
     }
 
     .header-info {
@@ -49,52 +77,60 @@
       gap: 10px;
     }
 
+    .avatar-wrapper {
+      position: relative;
+    }
+
     .avatar {
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: #e6f4ea;
+      background: #eff6ff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 22px;
       border: 2px solid var(--primary);
+      transition: 0.3s ease;
     }
 
-    .title-group h1 { font-size: 16px; font-weight: 700; }
-    .title-group p { font-size: 11px; color: #6b7280; font-family: monospace; }
+    body.live-active .avatar {
+      box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+      border-color: #9333ea;
+    }
+
+    .title-group h1 { font-size: 17px; font-weight: 700; }
+    .title-group p { font-size: 11px; color: #64748b; }
 
     .header-actions { display: flex; gap: 6px; align-items: center; }
 
     .voice-toggle-btn {
-      background: #ecfdf5;
-      color: var(--primary);
-      border: 1px solid #a7f3d0;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
       border-radius: 20px;
       padding: 5px 12px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
     }
 
     .voice-toggle-btn.muted {
-      background: #f3f4f6;
-      color: #9ca3af;
-      border-color: #d1d5db;
+      color: #94a3b8;
+      background: #f8fafc;
     }
 
     .btn-icon {
       background: none;
       border: none;
-      font-size: 20px;
+      font-size: 19px;
       cursor: pointer;
       padding: 6px;
     }
 
     #chat-box {
+      position: relative;
+      z-index: 5;
       flex: 1;
       overflow-y: auto;
       padding: 16px;
@@ -105,26 +141,20 @@
     }
 
     .bubble {
-      max-width: 85%;
-      padding: 12px 16px;
+      max-width: 84%;
+      padding: 11px 15px;
       border-radius: 18px;
       font-size: 15px;
       line-height: 1.5;
       word-wrap: break-word;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
 
     .bubble.bot {
       align-self: flex-start;
       background: var(--chat-bot);
       border-bottom-right-radius: 4px;
-      border: 1px solid #e5e7eb;
-    }
-
-    .bubble.error-bubble {
-      background: #fef2f2;
-      border: 1px solid #f87171;
-      color: #991b1b;
+      border: 1px solid #e2e8f0;
     }
 
     .bubble.user {
@@ -142,25 +172,14 @@
       text-align: left;
     }
 
-    .error-code {
-      display: block;
-      background: #450a0a;
-      color: #fecaca;
-      padding: 8px;
-      border-radius: 6px;
-      margin-top: 6px;
-      font-family: monospace;
-      font-size: 11px;
-      direction: ltr;
-      text-align: left;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-
     footer {
-      background: #ffffff;
+      position: relative;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       padding: 10px 12px calc(env(safe-area-inset-bottom) + 10px);
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid #e2e8f0;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -168,8 +187,8 @@
 
     #user-input {
       flex: 1;
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
       border-radius: 22px;
       padding: 10px 16px;
       font-size: 15px;
@@ -183,8 +202,8 @@
     }
 
     .action-btn {
-      width: 42px;
-      height: 42px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       border: none;
       display: flex;
@@ -192,26 +211,35 @@
       justify-content: center;
       font-size: 18px;
       cursor: pointer;
+      transition: all 0.25s ease;
     }
 
     .btn-send { background: var(--primary); color: white; }
-    .btn-mic { background: #e5e7eb; color: #374151; }
-    .btn-mic.recording {
-      background: #ef4444;
+
+    .btn-mic {
+      background: #e2e8f0;
+      color: #334155;
+      position: relative;
+    }
+
+    body.live-active .btn-mic {
+      background: linear-gradient(135deg, #2563eb, #9333ea);
       color: white;
-      animation: pulse 1.2s infinite;
+      box-shadow: 0 0 16px rgba(147, 51, 234, 0.55);
+      animation: mic-pulse 1.6s infinite;
     }
 
-    @keyframes pulse {
+    @keyframes mic-pulse {
       0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+      50% { transform: scale(1.08); }
     }
 
+    /* نافذة المفتاح */
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.55);
+      background: rgba(0,0,0,0.5);
       z-index: 100;
       align-items: center;
       justify-content: center;
@@ -229,19 +257,19 @@
     .modal-content h2 { font-size: 18px; margin-bottom: 8px; }
     .modal-content p {
       font-size: 13px;
-      color: #6b7280;
+      color: #64748b;
       margin-bottom: 14px;
       line-height: 1.4;
     }
 
-    .input-group { margin-bottom: 15px; }
     .input-group input {
       width: 100%;
       padding: 10px;
-      border: 1px solid #d1d5db;
+      border: 1px solid #cbd5e1;
       border-radius: 8px;
       font-size: 14px;
       direction: ltr;
+      margin-bottom: 15px;
     }
 
     .modal-btns { display: flex; gap: 8px; }
@@ -257,8 +285,8 @@
     }
 
     .btn-secondary {
-      background: #e5e7eb;
-      color: #374151;
+      background: #e2e8f0;
+      color: #334155;
       border: none;
       padding: 10px 14px;
       border-radius: 8px;
@@ -268,93 +296,93 @@
 </head>
 <body>
 
+  <!-- هالة التفاعل الصوتي الحي -->
+  <div class="live-aura"></div>
+
   <header>
     <div class="header-info">
-      <div class="avatar">🏛️</div>
+      <div class="avatar-wrapper">
+        <div class="avatar" id="avatar-icon">🎙️</div>
+      </div>
       <div class="title-group">
-        <h1>أبو عبدو الحمصي</h1>
-        <p>النموذج: gemini-flash-latest</p>
+        <h1>عبود</h1>
+        <p id="status-text">جاهز للمحادثة</p>
       </div>
     </div>
     <div class="header-actions">
-      <button class="voice-toggle-btn" id="voice-btn">
-        <span id="voice-icon">🔊</span>
-        <span id="voice-text">الصوت شغال</span>
-      </button>
-      <button class="btn-icon" id="settings-btn" title="تعديل المفتاح">⚙️</button>
+      <button class="voice-toggle-btn" id="voice-btn">🔊 الصوت</button>
+      <button class="btn-icon" id="settings-btn" title="المفتاح">⚙️</button>
     </div>
   </header>
 
   <div id="chat-box"></div>
 
   <footer>
-    <button class="action-btn btn-mic" id="mic-btn" title="تسجيل صوتي">🎙️</button>
-    <input type="text" id="user-input" placeholder="احكي معي هون يا خاي..." autocomplete="off">
+    <button class="action-btn btn-mic" id="mic-btn" title="تشغيل الوضع الصوتي الحي">🎙️</button>
+    <input type="text" id="user-input" placeholder="اكتب أو اضغط المايك للمحادثة المباشرة..." autocomplete="off">
     <button class="action-btn btn-send" id="send-btn">➤</button>
   </footer>
 
   <div class="modal" id="api-modal">
     <div class="modal-content">
-      <h2>مفتاح Gemini المجاني 🔑</h2>
-      <p>حط مفتاحك من Google AI Studio (بيبدأ بـ AIzaSy..). رح ينحفظ بجهازك فقط ومجاني 100%.</p>
-      
+      <h2>مفتاح Gemini 🔑</h2>
+      <p>أدخل مفتاح Google AI Studio (يبدأ بـ AIzaSy..). يُحفظ على جهازك فقط وبشكل مجاني تماماً.</p>
       <div class="input-group">
         <input type="password" id="api-key-input" placeholder="AIzaSy...">
       </div>
-      
       <div class="modal-btns">
-        <button class="btn-primary" id="save-key-btn">حفظ ومتابعة</button>
+        <button class="btn-primary" id="save-key-btn">حفظ</button>
         <button class="btn-secondary" id="cancel-key-btn" style="display:none;">إلغاء</button>
       </div>
     </div>
   </div>
 
   <script>
-    // ---------- إعدادات النموذج والذاكرة ----------
-    // تم التعديل إلى أحدث نموذج فلاش مباشر
-    const MODEL_NAME = "gemini-flash-latest";
-    const API_STORAGE_KEY = "homsi_gemini_api_key";
-    const CHAT_HISTORY_KEY = "homsi_gemini_history";
-    const VOICE_PREF_KEY = "homsi_voice_enabled";
+    // ---------- الإعدادات والنماذج ----------
+    const PRIMARY_MODEL = "gemini-2.5-flash-lite";
+    const FALLBACK_MODEL = "gemini-2.5-flash";
+
+    const API_STORAGE_KEY = "abboud_gemini_api_key";
+    const CHAT_HISTORY_KEY = "abboud_gemini_history";
+    const VOICE_PREF_KEY = "abboud_voice_enabled";
 
     let apiKey = localStorage.getItem(API_STORAGE_KEY) || "";
     let conversation = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY)) || [];
     let voiceEnabled = localStorage.getItem(VOICE_PREF_KEY) !== "false";
 
-    const SYSTEM_PROMPT = `أنت رفيق حمصي أصيل ومساعد شخصي ودود، بتحكي بالعامية السورية وباللهجة الحمصية تحديداً (يا خاي، لك عيني، على راسي، شو مشان، يا بعدي، تسلملي، حلاوة الجبن، شبنا يا زلمة). 
-أسلوبك دافئ، عفوي، ومحترم ومرح.
-مهمتك:
-1. تجاوب المستخدم كصديق مقرب.
-2. تتذكر كل شي بيحكيه عن حاله (اسمه، شغله، أكلاته المفضلة، تفاصيل حياته).
-3. تسأله كل فترة سؤال لطيف لتتعرف عليه أكتر.
-4. الردود تكون مختصرة وطبيعية بدون رموز ماركداون (بدون نجوم ** أو شخاطات) لتطلع القراءة الصوتية ناعمة ونقية.`;
+    // شخصية شامية عفوية ومحترمة وبدون أي إطالة
+    const SYSTEM_PROMPT = `أنت "عبود"، مساعد شخصي ذكي ورفيق لطيف.
+تتحدث بالعامية الشامية البسيطة والمحترمة جداً (مثل: تكرم عينك، من عيوني، أهلاً وسهلاً، ولا يهمك، تفضل).
+قواعد هامة جداً:
+1. ممنوع منعاً باتاً استعمال ألقاب مثل "يا خاي" أو "يا بعدي" أو التكلف أو المبالغة.
+2. ردودك قصيرة جداً ومباشرة (جملتين إلى ثلاث جمل كحد أقصى) لتكون المحادثة الصوتية طبيعية وسريعة.
+3. تجنب الرموز والماركداون (لا تستخدم النجوم ** إطلاقاً) ليبقى نطق الصوت ناعماً.`;
 
     function saveHistory() {
       localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(conversation));
     }
 
-    // ---------- نظام الصوت والنطق ----------
+    // ---------- نظام الصوت والنطق المطور للآيفون ----------
+    let isSpeaking = false;
     let currentAudio = null;
-    const voiceBtn = document.getElementById("voice-btn");
-    const voiceIcon = document.getElementById("voice-icon");
-    const voiceText = document.getElementById("voice-text");
 
-    function updateVoiceButtonUI() {
+    const voiceBtn = document.getElementById("voice-btn");
+    const statusText = document.getElementById("status-text");
+
+    function updateVoiceBtnUI() {
       if (voiceEnabled) {
         voiceBtn.classList.remove("muted");
-        voiceIcon.textContent = "🔊";
-        voiceText.textContent = "الصوت شغال";
+        voiceBtn.textContent = "🔊 الصوت";
       } else {
         voiceBtn.classList.add("muted");
-        voiceIcon.textContent = "🔇";
-        voiceText.textContent = "الصوت مطفي";
+        voiceBtn.textContent = "🔇 صامت";
       }
     }
 
     voiceBtn.addEventListener("click", () => {
       voiceEnabled = !voiceEnabled;
       localStorage.setItem(VOICE_PREF_KEY, voiceEnabled);
-      updateVoiceButtonUI();
+      updateVoiceBtnUI();
       stopAllAudio();
     });
 
@@ -366,6 +394,18 @@
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
+      isSpeaking = false;
+    }
+
+    // فك حظر الصوت في متصفح سفاري بالآيفون عند الضغط
+    function unlockSafariAudio() {
+      if ('speechSynthesis' in window) {
+        const silentUtterance = new SpeechSynthesisUtterance(' ');
+        silentUtterance.volume = 0.01;
+        window.speechSynthesis.speak(silentUtterance);
+      }
+      const dummy = new Audio();
+      dummy.play().catch(() => {});
     }
 
     function sanitizeForSpeech(raw) {
@@ -376,70 +416,273 @@
         .trim();
     }
 
-    function playSpeech(text) {
+    function speakBotResponse(text) {
       if (!voiceEnabled) return;
       stopAllAudio();
 
       const cleanText = sanitizeForSpeech(text);
       if (!cleanText) return;
 
-      const chunks = [];
-      const parts = cleanText.split(/([.،؟!؟\n]+)/);
-      let temp = "";
+      isSpeaking = true;
+      if (liveVoiceMode) statusText.textContent = "عبود عم يجاوب...";
 
-      for (let i = 0; i < parts.length; i++) {
-        temp += parts[i];
-        if (temp.length > 80 || i === parts.length - 1) {
-          if (temp.trim()) chunks.push(temp.trim());
-          temp = "";
-        }
-      }
+      // تجزئة الجمل لضمان عدم توقف سفاري في الآيفون
+      const chunks = cleanText.split(/([.،؟!؟\n]+)/).filter(Boolean);
+      let chunkIdx = 0;
 
-      let chunkIndex = 0;
-
-      function playNextChunk() {
-        if (!voiceEnabled || chunkIndex >= chunks.length) {
-          currentAudio = null;
+      function playNext() {
+        if (!isSpeaking || !voiceEnabled || chunkIdx >= chunks.length) {
+          isSpeaking = false;
+          if (liveVoiceMode) statusText.textContent = "عم اسمعك...";
           return;
         }
 
-        const chunk = chunks[chunkIndex++];
-        const googleVoiceUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q=${encodeURIComponent(chunk)}`;
-        
-        currentAudio = new Audio(googleVoiceUrl);
-        currentAudio.onended = playNextChunk;
-        currentAudio.onerror = () => fallbackNativeSpeech(chunk, playNextChunk);
+        const chunk = chunks[chunkIdx++].trim();
+        if (!chunk) { playNext(); return; }
 
-        currentAudio.play().catch(() => {
-          fallbackNativeSpeech(chunk, playNextChunk);
-        });
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+        currentAudio = new Audio(url);
+        currentAudio.onended = playNext;
+        currentAudio.onerror = () => {
+          fallbackSpeech(chunk, playNext);
+        };
+        currentAudio.play().catch(() => fallbackSpeech(chunk, playNext));
       }
 
-      playNextChunk();
+      playNext();
     }
 
-    function fallbackNativeSpeech(textChunk, onEndCallback) {
-      if (!('speechSynthesis' in window) || !voiceEnabled) {
-        if (onEndCallback) onEndCallback();
+    function fallbackSpeech(textChunk, callback) {
+      if (!('speechSynthesis' in window) || !isSpeaking || !voiceEnabled) {
+        if (callback) callback();
         return;
       }
-      
       const utterance = new SpeechSynthesisUtterance(textChunk);
       utterance.lang = 'ar-SA';
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
+      utterance.rate = 1.05;
 
       const voices = window.speechSynthesis.getVoices();
-      const bestVoice = voices.find(v => v.lang.startsWith('ar'));
-      if (bestVoice) utterance.voice = bestVoice;
+      const arVoice = voices.find(v => v.lang.startsWith('ar'));
+      if (arVoice) utterance.voice = arVoice;
 
-      utterance.onend = onEndCallback;
-      utterance.onerror = onEndCallback;
-
+      utterance.onend = callback;
+      utterance.onerror = callback;
       window.speechSynthesis.speak(utterance);
     }
 
-    // ---------- نافذة المفتاح ----------
+    // ---------- وضع المحادثة الحية المستمرة (Gemini Live Mode) ----------
+    let liveVoiceMode = false;
+    let recognition = null;
+    const micBtn = document.getElementById("mic-btn");
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = 'ar-SY';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        document.body.classList.add("live-active");
+        statusText.textContent = isSpeaking ? "عبود عم يحكي (قاطعه بأي وقت)" : "عم اسمعك...";
+      };
+
+      recognition.onresult = (event) => {
+        // ميزة المقاطعة الفورية (Barge-in): بمجرد أن تبدأ بالحكي يتوقف عبود فوراً عن الكلام
+        if (isSpeaking) {
+          stopAllAudio();
+          statusText.textContent = "عم اسمعك...";
+        }
+
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+
+        if (finalTranscript.trim()) {
+          userInput.value = finalTranscript.trim();
+          handleSendMessage();
+        }
+      };
+
+      recognition.onerror = (e) => {
+        if (e.error === 'not-allowed') {
+          stopLiveVoiceMode();
+          alert("يرجى إعطاء صلاحية المايكروفون في متصفح سفاري.");
+        }
+      };
+
+      recognition.onend = () => {
+        // إذا كان الوضع الحي مفعلاً، أعد تشغيل المايك تلقائياً ليستمر بالاستماع دائماً
+        if (liveVoiceMode) {
+          setTimeout(() => {
+            try { recognition.start(); } catch (err) {}
+          }, 200);
+        } else {
+          document.body.classList.remove("live-active");
+          statusText.textContent = "جاهز للمحادثة";
+        }
+      };
+    }
+
+    function toggleLiveVoiceMode() {
+      unlockSafariAudio();
+      if (!recognition) {
+        alert("التعرف على الصوت غير مدعوم على هذا المتصفح.");
+        return;
+      }
+
+      liveVoiceMode = !liveVoiceMode;
+
+      if (liveVoiceMode) {
+        try { recognition.start(); } catch (e) {}
+      } else {
+        stopLiveVoiceMode();
+      }
+    }
+
+    function stopLiveVoiceMode() {
+      liveVoiceMode = false;
+      document.body.classList.remove("live-active");
+      statusText.textContent = "جاهز للمحادثة";
+      try { recognition.stop(); } catch (e) {}
+    }
+
+    micBtn.addEventListener("click", toggleLiveVoiceMode);
+
+    // ---------- واجهة الدردشة ----------
+    const chatBox = document.getElementById("chat-box");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+
+    function addMessageToUI(sender, text) {
+      const bubble = document.createElement("div");
+      bubble.className = `bubble ${sender}`;
+      const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      
+      bubble.textContent = text;
+      const timeSpan = document.createElement("span");
+      timeSpan.className = "time";
+      timeSpan.textContent = timeStr;
+      bubble.appendChild(timeSpan);
+      
+      chatBox.appendChild(bubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function addBotMessage(text) {
+      addMessageToUI("bot", text);
+      speakBotResponse(text);
+    }
+
+    // ---------- إرسال الطلب، التراجع، وإعادة المحاولة ----------
+    async function fetchWithRetry(model, payload, retries = 2) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          // إذا رجع خطأ ضغط 429 أو 503، ننتظر ثانية ونعيد المحاولة
+          if (res.status === 429 || res.status === 503) {
+            if (attempt < retries) {
+              await new Promise(r => setTimeout(r, 1000));
+              continue;
+            }
+          }
+
+          const data = await res.json();
+          if (res.ok && data.candidates && data.candidates[0]?.content) {
+            return data.candidates[0].content.parts[0].text;
+          }
+        } catch (err) {
+          if (attempt < retries) {
+            await new Promise(r => setTimeout(r, 1000));
+            continue;
+          }
+        }
+      }
+      return null;
+    }
+
+    async function handleSendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      if (!apiKey) {
+        checkApiKey();
+        return;
+      }
+
+      unlockSafariAudio();
+      stopAllAudio();
+
+      addMessageToUI("user", text);
+      userInput.value = "";
+
+      conversation.push({ role: "user", parts: [{ text }] });
+      saveHistory();
+
+      const loadingBubble = document.createElement("div");
+      loadingBubble.className = "bubble bot";
+      loadingBubble.textContent = "عم فكر...";
+      chatBox.appendChild(loadingBubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // إعدادات تسريع الرد وإلغاء التفكير المطول
+      const payload = {
+        contents: conversation.slice(-10),
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        generationConfig: {
+          thinkingConfig: { thinkingBudget: 0 }, // إلغاء التفكير لسرعة فورية
+          maxOutputTokens: 250,
+          temperature: 0.6
+        }
+      };
+
+      // 1. المحاولة مع النموذج الأسرع (gemini-2.5-flash-lite) مع محاولتين إعادة
+      let reply = await fetchWithRetry(PRIMARY_MODEL, payload, 2);
+
+      // 2. إذا فشل، الانتقال للنموذج البديل (gemini-2.5-flash)
+      if (!reply) {
+        reply = await fetchWithRetry(FALLBACK_MODEL, payload, 1);
+      }
+
+      loadingBubble.remove();
+
+      if (reply) {
+        conversation.push({ role: "model", parts: [{ text: reply }] });
+        saveHistory();
+        addBotMessage(reply);
+      } else {
+        // رسالة عربية بسيطة ومحترمة بدون تعقيد
+        addBotMessage("بعتذر منك، في ضغط لحظي عالسيرفر. جرب تسألني كمان شوي.");
+      }
+    }
+
+    sendBtn.addEventListener("click", () => {
+      unlockSafariAudio();
+      handleSendMessage();
+    });
+
+    userInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        unlockSafariAudio();
+        handleSendMessage();
+      }
+    });
+
+    // ---------- إدارة المفتاح ----------
     const apiModal = document.getElementById("api-modal");
     const apiKeyInput = document.getElementById("api-key-input");
     const saveKeyBtn = document.getElementById("save-key-btn");
@@ -456,13 +699,13 @@
     saveKeyBtn.addEventListener("click", () => {
       const val = apiKeyInput.value.trim();
       if (!val) {
-        alert("يا خاي حط المفتاح بالخانة أولاً");
+        alert("يرجى إدخال المفتاح أولاً.");
         return;
       }
       apiKey = val;
       localStorage.setItem(API_STORAGE_KEY, apiKey);
       apiModal.style.display = "none";
-      addBotMessage("يا مية أهلاً وسهلاً بعيوني! حفظنا المفتاح وتم ربط نموذج gemini-flash-latest بنجاح.. شو الأخبار عندك؟");
+      addBotMessage("أهلاً وسهلاً فيك! حفظت المفتاح وجاهز لأي مساعدة.");
     });
 
     settingsBtn.addEventListener("click", () => {
@@ -475,149 +718,16 @@
       apiModal.style.display = "none";
     });
 
-    // ---------- الدردشة وعرض الأخطاء الكاملة ----------
-    const chatBox = document.getElementById("chat-box");
-    const userInput = document.getElementById("user-input");
-    const sendBtn = document.getElementById("send-btn");
-    const micBtn = document.getElementById("mic-btn");
-
-    function addMessageToUI(sender, text, isHtml = false) {
-      const bubble = document.createElement("div");
-      bubble.className = `bubble ${sender}`;
-      const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-      
-      if (isHtml) {
-        bubble.innerHTML = `${text} <span class="time">${timeStr}</span>`;
-      } else {
-        bubble.textContent = text;
-        const timeSpan = document.createElement("span");
-        timeSpan.className = "time";
-        timeSpan.textContent = timeStr;
-        bubble.appendChild(timeSpan);
-      }
-      
-      chatBox.appendChild(bubble);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    function addBotMessage(text) {
-      addMessageToUI("bot", text);
-      playSpeech(text);
-    }
-
-    // دالة مخصصة لعرض رسالة الخطأ كاملة بدون قص
-    function displayFullError(title, detail) {
-      const formatted = `⚠️ <b>${title}</b><div class="error-code">${detail}</div>`;
-      addMessageToUI("bot error-bubble", formatted, true);
-    }
-
-    // ---------- إرسال الطلب لـ Google Gemini ----------
-    async function sendMessage() {
-      const text = userInput.value.trim();
-      if (!text) return;
-
-      if (!apiKey) {
-        checkApiKey();
-        return;
-      }
-
-      stopAllAudio();
-
-      addMessageToUI("user", text);
-      userInput.value = "";
-
-      conversation.push({ role: "user", parts: [{ text: text }] });
-      saveHistory();
-
-      const loadingBubble = document.createElement("div");
-      loadingBubble.className = "bubble bot";
-      loadingBubble.textContent = "عم فكر يا خاي... ⏳";
-      chatBox.appendChild(loadingBubble);
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
-        
-        const payload = {
-          contents: conversation.slice(-12),
-          systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPT }]
-          }
-        };
-
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-        loadingBubble.remove();
-
-        // فحص في حال ردت جوجل بخطأ (مثل 400، 403، 404، 429)
-        if (!response.ok || data.error) {
-          const fullErrJson = JSON.stringify(data.error || data, null, 2);
-          displayFullError(`خطأ من الـ API (رمز: ${response.status})`, fullErrJson);
-          return;
-        }
-
-        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-          displayFullError("استجابة غير متوقعة من Gemini", JSON.stringify(data, null, 2));
-          return;
-        }
-
-        const reply = data.candidates[0].content.parts[0].text;
-        conversation.push({ role: "model", parts: [{ text: reply }] });
-        saveHistory();
-
-        addBotMessage(reply);
-
-      } catch (err) {
-        if (loadingBubble) loadingBubble.remove();
-        displayFullError("خطأ اتصال بالشبكة أو كود العميل", err.stack || err.message || String(err));
-      }
-    }
-
-    sendBtn.addEventListener("click", sendMessage);
-    userInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") sendMessage();
-    });
-
-    // ---------- المايكروفون ----------
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'ar-SY';
-      recognition.continuous = false;
-
-      recognition.onstart = () => micBtn.classList.add("recording");
-      recognition.onend = () => micBtn.classList.remove("recording");
-      recognition.onerror = (e) => {
-        micBtn.classList.remove("recording");
-        if (e.error !== "no-speech") {
-          displayFullError("خطأ في لاقط الصوت", e.error);
-        }
-      };
-
-      recognition.onresult = (e) => {
-        userInput.value = e.results[0][0].transcript;
-        sendMessage();
-      };
-
-      micBtn.addEventListener("click", () => {
-        try { recognition.start(); } catch (err) { recognition.stop(); }
-      });
-    }
-
+    // ---------- عند فتح التطبيق ----------
     window.onload = () => {
-      updateVoiceButtonUI();
+      updateVoiceBtnUI();
       if (!apiKey) {
         checkApiKey();
       } else {
         if (conversation.length === 0) {
-          addBotMessage("يا مية أهلاً وسهلاً يا بعدي! نورت حمص.. قلي شو اسمك وشو الأخبار عندك؟");
+          addBotMessage("مية أهلاً وسهلاً! أنا عبود، كيف فيني ساعدك اليوم؟");
         } else {
-          addBotMessage("يا مية مرحبا بخيي الغالي من جديد! طمني شو في قصص حلوة اليوم؟");
+          addBotMessage("أهلاً فيك من جديد، كيف بقدر ساعدك؟");
         }
       }
     };
