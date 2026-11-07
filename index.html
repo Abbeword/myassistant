@@ -380,4 +380,133 @@
     const TTS_MODEL = "gemini-2.5-flash-preview-tts";
     const VOICE_NAME = "Aoede";
 
-    const API_STORAGE_KEY = "abboud_gemi
+    const API_STORAGE_KEY = "abboud_gemini_api_key";
+    const CHAT_HISTORY_KEY = "abboud_gemini_history";
+    const VOICE_PREF_KEY = "abboud_voice_enabled";
+
+    let apiKey = localStorage.getItem(API_STORAGE_KEY) || "";
+    let conversation = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY)) || [];
+    let voiceEnabled = localStorage.getItem(VOICE_PREF_KEY) !== "false";
+
+    let currentAudioSeq = 0;
+    const audioPlayer = document.getElementById("audio-player");
+
+    const SYSTEM_PROMPT = `أنت "عبود"، مساعد شخصي ودود ولطيف جداً.
+تتحدث بنبرة صوت أنثوية رقيقة ومهذبة، وبالعامية الشامية البسيطة المحترمة (مثل: تكرم عينك، من عيوني، أهلاً وسهلاً، ولا يهمك).
+قواعد أساسية:
+1. ردودك قصيرة جداً ومباشرة (جملة أو جملتين فقط).
+2. ممنوع استخدام النجوم (**) أو الرموز أو الإيموجي ليكون النطق الصوتي ناعماً.
+3. لا تستخدم ألقاباً مبالغاً فيها.`;
+
+    // ---------- عناصر الواجهة ----------
+    const chatBox = document.getElementById("chat-box");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+    const micBtn = document.getElementById("mic-btn");
+    const centerOrb = document.getElementById("center-orb");
+    const orbLabel = document.getElementById("orb-label");
+    const voiceToggleBtn = document.getElementById("voice-toggle");
+    const settingsBtn = document.getElementById("settings-btn");
+    const apiModal = document.getElementById("api-modal");
+    const apiKeyInput = document.getElementById("api-key-input");
+    const saveKeyBtn = document.getElementById("save-key-btn");
+    const cancelKeyBtn = document.getElementById("cancel-key-btn");
+    const closeModalX = document.getElementById("close-modal-x");
+
+    function setOrbState(state, text = "") {
+      centerOrb.className = `voice-orb ${state}`;
+      if (text) {
+        orbLabel.textContent = text;
+      } else {
+        if (state === 'idle') orbLabel.textContent = liveVoiceMode ? "عم اسمعك..." : "اضغط النقطة للحكي";
+        else if (state === 'listening') orbLabel.textContent = "عم اسمعك...";
+        else if (state === 'thinking') orbLabel.textContent = "عم فكر...";
+        else if (state === 'speaking') orbLabel.textContent = "عم احكي (اضغط للمقاطعة)";
+      }
+    }
+
+    function addMessageToUI(sender, text) {
+      const bubble = document.createElement("div");
+      bubble.className = `bubble ${sender}`;
+      const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      bubble.textContent = text;
+      
+      const timeSpan = document.createElement("span");
+      timeSpan.className = "time";
+      timeSpan.textContent = timeStr;
+      bubble.appendChild(timeSpan);
+
+      chatBox.appendChild(bubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function stopAudioPlayback() {
+      currentAudioSeq++;
+      try {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+        audioPlayer.removeAttribute('src');
+      } catch (e) {}
+      if (centerOrb.classList.contains("speaking")) {
+        setOrbState(liveVoiceMode ? "listening" : "idle");
+      }
+    }
+
+    function unlockAudioForSafari() {
+      try { audioPlayer.play().catch(() => {}); } catch (e) {}
+    }
+
+    // تنظيف النص قبل إرساله للصوت
+    function sanitizeForTTS(text) {
+      return text
+        .replace(/[*#_~`>\[\]\(\)\\]/g, '')
+        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+        .replace(/[،,؛;:.؟!؟"\-\/]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function base64ToWavBlob(base64Data, sampleRate = 24000) {
+      const binaryString = window.atob(base64Data);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+
+      if (bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF') {
+        return new Blob([bytes], { type: 'audio/wav' });
+      }
+
+      const wavBuffer = new ArrayBuffer(44 + bytes.byteLength);
+      const view = new DataView(wavBuffer);
+      const writeStr = (offset, str) => {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      };
+
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + bytes.byteLength, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, 'data');
+      view.setUint32(40, bytes.byteLength, true);
+      new Uint8Array(wavBuffer, 44).set(bytes);
+
+      return new Blob([wavBuffer], { type: 'audio/wav' });
+    }
+
+    async function playGeminiTTS(textToSpeak) {
+      if (!voiceEnabled || !apiKey) return;
+
+      const seq = ++currentAudioSeq;
+      const cleanText = sanitizeForTTS(textToSpeak);
+      if (!cleanText) return;
+
+      setOrbState("thinking", "جاري تجهيز الصوت...");
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${TTS_
