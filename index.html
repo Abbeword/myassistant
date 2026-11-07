@@ -6,13 +6,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="عبود">
-  <title>عبود - Gemini Voice</title>
+  <title>عبود - المساعد الذكي</title>
   <style>
     :root {
       --primary: #8b5cf6;
+      --primary-hover: #7c3aed;
       --bg-color: #0f172a;
       --chat-user: #6d28d9;
-      --chat-bot: rgba(30, 41, 59, 0.75);
+      --chat-bot: rgba(30, 41, 59, 0.85);
       --text-main: #f8fafc;
     }
 
@@ -35,100 +36,13 @@
       position: relative;
     }
 
-    /* النقطة التفاعلية في منتصف الشاشة */
-    .orb-stage {
-      position: absolute;
-      top: 42%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      pointer-events: none;
-    }
-
-    .voice-orb {
-      width: 76px;
-      height: 76px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #f472b6, #8b5cf6 60%, #3b82f6);
-      box-shadow: 0 0 35px rgba(139, 92, 246, 0.45);
-      pointer-events: auto;
-      cursor: pointer;
-      position: relative;
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
-    }
-
-    /* هالات التفاعل المحيطة بالنقطة */
-    .orb-glow {
-      position: absolute;
-      inset: -14px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(168, 85, 247, 0.4), transparent 70%);
-      opacity: 0.4;
-      pointer-events: none;
-      animation: orb-idle 4s infinite ease-in-out;
-    }
-
-    /* حالات النقطة التفاعلية */
-    .voice-orb.idle {
-      animation: orb-idle 3.5s infinite ease-in-out;
-    }
-
-    .voice-orb.listening {
-      transform: scale(1.15);
-      box-shadow: 0 0 60px rgba(244, 114, 182, 0.75), 0 0 100px rgba(139, 92, 246, 0.4);
-      animation: orb-listen 1.4s infinite alternate ease-in-out;
-    }
-
-    .voice-orb.thinking {
-      animation: orb-spin 1.8s infinite linear;
-      box-shadow: 0 0 45px rgba(59, 130, 246, 0.8);
-    }
-
-    .voice-orb.speaking {
-      animation: orb-speak 0.75s infinite alternate ease-in-out;
-      box-shadow: 0 0 70px rgba(168, 85, 247, 0.9), 0 0 120px rgba(236, 72, 153, 0.5);
-    }
-
-    @keyframes orb-idle {
-      0%, 100% { transform: scale(1); opacity: 0.85; }
-      50% { transform: scale(1.05); opacity: 1; }
-    }
-
-    @keyframes orb-listen {
-      0% { transform: scale(1.1); filter: hue-rotate(0deg); }
-      100% { transform: scale(1.28); filter: hue-rotate(45deg); }
-    }
-
-    @keyframes orb-spin {
-      0% { transform: scale(1.05) rotate(0deg); filter: hue-rotate(0deg); }
-      100% { transform: scale(1.05) rotate(360deg); filter: hue-rotate(180deg); }
-    }
-
-    @keyframes orb-speak {
-      0% { transform: scale(1.1); filter: brightness(1); }
-      100% { transform: scale(1.35); filter: brightness(1.25); }
-    }
-
-    .orb-label {
-      margin-top: 18px;
-      font-size: 13px;
-      color: #cbd5e1;
-      font-weight: 500;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
-      transition: opacity 0.3s ease;
-    }
-
     /* رأس الصفحة */
     header {
       position: relative;
-      z-index: 20;
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      z-index: 50;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       padding: calc(env(safe-area-inset-top) + 10px) 16px 12px;
       display: flex;
       align-items: center;
@@ -144,9 +58,9 @@
     .btn-toggle-voice {
       background: rgba(255, 255, 255, 0.08);
       color: #e2e8f0;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 20px;
-      padding: 5px 12px;
+      padding: 6px 12px;
       font-size: 12px;
       cursor: pointer;
     }
@@ -159,10 +73,85 @@
     .btn-icon {
       background: none;
       border: none;
-      font-size: 19px;
+      font-size: 20px;
       cursor: pointer;
       color: #e2e8f0;
       padding: 6px;
+    }
+
+    /* النقطة التفاعلية في منتصف الشاشة */
+    .orb-stage {
+      position: absolute;
+      top: 38%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      pointer-events: none; /* حتى لا تمنع لمس الشاشة */
+    }
+
+    .voice-orb {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #f472b6, #8b5cf6 60%, #3b82f6);
+      box-shadow: 0 0 35px rgba(139, 92, 246, 0.45);
+      pointer-events: auto; /* فقط النقطة نفسها تستقبل الضغط */
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .voice-orb.idle {
+      animation: orb-idle 3.5s infinite ease-in-out;
+    }
+
+    .voice-orb.listening {
+      transform: scale(1.18);
+      box-shadow: 0 0 55px rgba(244, 114, 182, 0.8), 0 0 90px rgba(139, 92, 246, 0.5);
+      animation: orb-listen 1.3s infinite alternate ease-in-out;
+    }
+
+    .voice-orb.thinking {
+      animation: orb-spin 1.5s infinite linear;
+      box-shadow: 0 0 45px rgba(59, 130, 246, 0.8);
+    }
+
+    .voice-orb.speaking {
+      animation: orb-speak 0.75s infinite alternate ease-in-out;
+      box-shadow: 0 0 65px rgba(168, 85, 247, 0.9), 0 0 100px rgba(236, 72, 153, 0.6);
+    }
+
+    @keyframes orb-idle {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.05); opacity: 1; }
+    }
+
+    @keyframes orb-listen {
+      0% { transform: scale(1.12); filter: hue-rotate(0deg); }
+      100% { transform: scale(1.26); filter: hue-rotate(40deg); }
+    }
+
+    @keyframes orb-spin {
+      0% { transform: scale(1.05) rotate(0deg); }
+      100% { transform: scale(1.05) rotate(360deg); }
+    }
+
+    @keyframes orb-speak {
+      0% { transform: scale(1.1); }
+      100% { transform: scale(1.32); }
+    }
+
+    .orb-label {
+      margin-top: 15px;
+      font-size: 13px;
+      color: #cbd5e1;
+      font-weight: 500;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      pointer-events: none;
     }
 
     /* صندوق الرسائل */
@@ -176,14 +165,13 @@
       flex-direction: column;
       gap: 12px;
       -webkit-overflow-scrolling: touch;
-      margin-bottom: 8px;
     }
 
     .bubble {
       max-width: 82%;
       padding: 11px 15px;
       border-radius: 18px;
-      font-size: 14.5px;
+      font-size: 15px;
       line-height: 1.5;
       word-wrap: break-word;
       backdrop-filter: blur(8px);
@@ -213,18 +201,11 @@
       text-align: left;
     }
 
-    .notice-tag {
-      font-size: 11px;
-      color: #fbbf24;
-      display: block;
-      margin-top: 5px;
-    }
-
-    /* شريط الكتابة */
+    /* شريط الإدخال */
     footer {
       position: relative;
-      z-index: 20;
-      background: rgba(15, 23, 42, 0.85);
+      z-index: 50;
+      background: rgba(15, 23, 42, 0.92);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       padding: 10px 12px calc(env(safe-area-inset-bottom) + 10px);
@@ -236,19 +217,21 @@
 
     #user-input {
       flex: 1;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
       border-radius: 22px;
-      padding: 10px 16px;
+      padding: 11px 16px;
       font-size: 15px;
       outline: none;
       direction: rtl;
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     #user-input:focus {
       border-color: var(--primary);
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
     }
 
     .action-btn {
@@ -263,11 +246,18 @@
       cursor: pointer;
       color: white;
       background: var(--primary);
+      flex-shrink: 0;
     }
 
     .btn-mic {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
       color: #cbd5e1;
+    }
+
+    .btn-mic.active {
+      background: #ec4899;
+      color: white;
+      box-shadow: 0 0 15px rgba(236, 72, 153, 0.6);
     }
 
     /* نافذة المفتاح */
@@ -275,7 +265,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.75);
       z-index: 100;
       align-items: center;
       justify-content: center;
@@ -292,12 +282,19 @@
       color: #fff;
     }
 
-    .modal-content h2 { font-size: 18px; margin-bottom: 8px; }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .modal-content h2 { font-size: 18px; }
     .modal-content p { font-size: 13px; color: #94a3b8; margin-bottom: 14px; line-height: 1.4; }
 
     .input-group input {
       width: 100%;
-      padding: 10px;
+      padding: 11px;
       border: 1px solid #334155;
       background: #0f172a;
       color: #fff;
@@ -331,18 +328,16 @@
 </head>
 <body>
 
-  <!-- النقطة التفاعلية الملونة في منتصف الشاشة -->
+  <!-- النقطة التفاعلية في المنتصف -->
   <div class="orb-stage">
-    <div class="voice-orb idle" id="center-orb" title="اضغط للتحدث الحي">
-      <div class="orb-glow"></div>
-    </div>
+    <div class="voice-orb idle" id="center-orb" title="اضغط للتحدث الحي"></div>
     <div class="orb-label" id="orb-label">اضغط النقطة للحكي</div>
   </div>
 
   <header>
     <div class="header-info">
       <h1>عبود</h1>
-      <p>صوت Gemini الأنثوي الرقيق</p>
+      <p id="sub-status">صوت Gemini الأنثوي</p>
     </div>
     <div class="header-actions">
       <button class="btn-toggle-voice" id="voice-toggle">🔊 الصوت</button>
@@ -354,323 +349,35 @@
 
   <footer>
     <button class="action-btn btn-mic" id="mic-btn" title="المايك">🎙️</button>
-    <input type="text" id="user-input" placeholder="اكتب أو اضغط النقطة للمحادثة..." autocomplete="off">
+    <input type="text" id="user-input" placeholder="اكتب أو اضغط النقطة للحكي..." autocomplete="off">
     <button class="action-btn" id="send-btn">➤</button>
   </footer>
 
-  <!-- عنصر تشغيل الصوت -->
   <audio id="audio-player" playsinline preload="auto"></audio>
 
+  <!-- نافذة المفتاح -->
   <div class="modal" id="api-modal">
     <div class="modal-content">
-      <h2>مفتاح Gemini 🔑</h2>
+      <div class="modal-header">
+        <h2>مفتاح Gemini 🔑</h2>
+        <button class="btn-icon" id="close-modal-x" style="font-size:16px;">✕</button>
+      </div>
       <p>أدخل مفتاحك المجاني من Google AI Studio (يبدأ بـ AIzaSy..).</p>
       <div class="input-group">
         <input type="password" id="api-key-input" placeholder="AIzaSy...">
       </div>
       <div class="modal-btns">
         <button class="btn-primary" id="save-key-btn">حفظ</button>
-        <button class="btn-secondary" id="cancel-key-btn" style="display:none;">إلغاء</button>
+        <button class="btn-secondary" id="cancel-key-btn">إلغاء</button>
       </div>
     </div>
   </div>
 
   <script>
-    // ---------- الإعدادات والنماذج ----------
+    // ---------- الإعدادات والمتغيرات الأساسية ----------
     const TEXT_MODEL_PRIMARY = "gemini-2.5-flash-lite";
     const TEXT_MODEL_FALLBACK = "gemini-2.5-flash";
-    const TTS_MODEL = "gemini-2.5-flash-preview-tts"; // أحدث نموذج TTS من جوجل
-    const VOICE_NAME = "Aoede"; // نبرة صوت أنثوية ناعمة ورقيقة وتفاعلية
+    const TTS_MODEL = "gemini-2.5-flash-preview-tts";
+    const VOICE_NAME = "Aoede";
 
-    const API_STORAGE_KEY = "abboud_gemini_api_key";
-    const CHAT_HISTORY_KEY = "abboud_gemini_history";
-    const VOICE_PREF_KEY = "abboud_voice_enabled";
-
-    let apiKey = localStorage.getItem(API_STORAGE_KEY) || "";
-    let conversation = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY)) || [];
-    let voiceEnabled = localStorage.getItem(VOICE_PREF_KEY) !== "false";
-
-    let currentAudioSeq = 0; // لمنع تكرار الصوت
-    const audioPlayer = document.getElementById("audio-player");
-
-    // شخصية شامية عفوية ومحترمة وبدون أي إطالة
-    const SYSTEM_PROMPT = `أنت "عبود"، مساعد شخصي ودود ولطيف جداً.
-تتحدث بنبرة صوت أنثوية رقيقة ومهذبة، وبالعامية الشامية البسيطة المحترمة (مثل: تكرم عينك، من عيوني، أهلاً وسهلاً، ولا يهمك).
-قواعد أساسية:
-1. ردودك قصيرة جداً ومباشرة (جملة أو جملتين فقط).
-2. ممنوع استخدام النجوم (**) أو الرموز أو الإيموجي أو التشكيل المعقد ليكون النطق الصوتي ناعماً ونقياً.
-3. لا تستخدم ألقاباً مبالغاً فيها.`;
-
-    function saveHistory() {
-      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(conversation));
-    }
-
-    // ---------- حالة النقطة التفاعلية (Center Orb) ----------
-    const centerOrb = document.getElementById("center-orb");
-    const orbLabel = document.getElementById("orb-label");
-
-    function setOrbState(state, customLabel = "") {
-      centerOrb.className = `voice-orb ${state}`;
-      if (customLabel) {
-        orbLabel.textContent = customLabel;
-      } else {
-        switch (state) {
-          case 'idle':
-            orbLabel.textContent = liveVoiceMode ? "عم اسمعك..." : "اضغط النقطة للحكي";
-            break;
-          case 'listening':
-            orbLabel.textContent = "عم اسمعك...";
-            break;
-          case 'thinking':
-            orbLabel.textContent = "عم فكر...";
-            break;
-          case 'speaking':
-            orbLabel.textContent = "عم احكي (اضغط للمقاطعة)";
-            break;
-        }
-      }
-    }
-
-    // ---------- نظام الصوت: إيقاف، تحضير، وتنظيف ----------
-    function stopAudioPlayback() {
-      currentAudioSeq++; // إبطال أي طلب صوت سابق في الخلفية
-      audioPlayer.pause();
-      audioPlayer.currentTime = 0;
-      audioPlayer.removeAttribute('src');
-      audioPlayer.load();
-      if (centerOrb.classList.contains("speaking")) {
-        setOrbState(liveVoiceMode ? "listening" : "idle");
-      }
-    }
-
-    // فك حظر الصوت في متصفح Safari على الآيفون عند أول تفاعل
-    function unlockAudioForSafari() {
-      audioPlayer.play().catch(() => {});
-    }
-
-    // تنظيف النص قبل إرساله للـ TTS (حذف النجوم، الرموز، وعلامات الترقيم)
-    function sanitizeForTTS(text) {
-      return text
-        .replace(/[*#_~`>\[\]\(\)\\]/g, '') // إزالة الماركداون
-        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '') // إزالة الإيموجي
-        .replace(/[،,؛;:.؟!؟"\-\/]/g, ' ') // إزالة علامات الترقيم لعدم نطقها واستبدالها بمسافة
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-
-    // تحويل الـ PCM/WAV القادم من Gemini وتشغيله
-    function base64ToWavBlob(base64Data, sampleRate = 24000) {
-      const binaryString = window.atob(base64Data);
-      const len = binaryString.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      // إذا كان الملف يحتوي على ترويسة RIFF مسبقاً نستخدمه مباشرة
-      if (bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF') {
-        return new Blob([bytes], { type: 'audio/wav' });
-      }
-
-      // وإلا نقوم بتركيب ترويسة WAV 44-byte لـ PCM 24000Hz 16-bit Mono
-      const wavBuffer = new ArrayBuffer(44 + bytes.byteLength);
-      const view = new DataView(wavBuffer);
-      const writeStr = (offset, str) => {
-        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
-      };
-
-      writeStr(0, 'RIFF');
-      view.setUint32(4, 36 + bytes.byteLength, true);
-      writeStr(8, 'WAVE');
-      writeStr(12, 'fmt ');
-      view.setUint32(16, 16, true);
-      view.setUint16(20, 1, true); // PCM
-      view.setUint16(22, 1, true); // Mono
-      view.setUint32(24, sampleRate, true);
-      view.setUint32(28, sampleRate * 2, true);
-      view.setUint16(32, 2, true);
-      view.setUint16(34, 16, true);
-      writeStr(36, 'data');
-      view.setUint32(40, bytes.byteLength, true);
-      new Uint8Array(wavBuffer, 44).set(bytes);
-
-      return new Blob([wavBuffer], { type: 'audio/wav' });
-    }
-
-    // طلب وتشغيل Gemini TTS
-    async function playGeminiTTS(textToSpeak) {
-      if (!voiceEnabled || !apiKey) return;
-
-      const seq = ++currentAudioSeq;
-      const cleanText = sanitizeForTTS(textToSpeak);
-      if (!cleanText) return;
-
-      setOrbState("thinking", "جاري تجهيز الصوت...");
-
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent?key=${apiKey}`;
-      const payload = {
-        contents: [{ parts: [{ text: cleanText }] }],
-        generationConfig: {
-          responseModalities: ["AUDIO"],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: VOICE_NAME }
-            }
-          }
-        }
-      };
-
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        // إذا أوقف المستخدم الصوت أثناء انتظار الرد نلغي التشغيل
-        if (seq !== currentAudioSeq) return;
-
-        const data = await res.json();
-        const base64Audio = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-
-        if (res.ok && base64Audio) {
-          const blob = base64ToWavBlob(base64Audio);
-          const audioUrl = URL.createObjectURL(blob);
-
-          audioPlayer.src = audioUrl;
-          setOrbState("speaking");
-
-          audioPlayer.onended = () => {
-            URL.revokeObjectURL(audioUrl);
-            setOrbState(liveVoiceMode ? "listening" : "idle");
-          };
-
-          audioPlayer.onerror = () => {
-            setOrbState(liveVoiceMode ? "listening" : "idle");
-          };
-
-          audioPlayer.play().catch(() => {
-            setOrbState(liveVoiceMode ? "listening" : "idle");
-          });
-
-        } else {
-          // في حال انتهاء الحصة أو خطأ بـ TTS
-          showVoiceNotice();
-          setOrbState(liveVoiceMode ? "listening" : "idle");
-        }
-      } catch (err) {
-        showVoiceNotice();
-        setOrbState(liveVoiceMode ? "listening" : "idle");
-      }
-    }
-
-    function showVoiceNotice() {
-      const notice = document.createElement("div");
-      notice.className = "notice-tag";
-      notice.textContent = "تعذر تشغيل الصوت من السيرفر حالياً، تم عرض الرد كتابياً.";
-      chatBox.appendChild(notice);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    // زر تشغيل/إيقاف الصوت
-    const voiceToggleBtn = document.getElementById("voice-toggle");
-    voiceToggleBtn.addEventListener("click", () => {
-      voiceEnabled = !voiceEnabled;
-      localStorage.setItem(VOICE_PREF_KEY, voiceEnabled);
-      voiceToggleBtn.classList.toggle("muted", !voiceEnabled);
-      voiceToggleBtn.textContent = voiceEnabled ? "🔊 الصوت" : "🔇 صامت";
-      if (!voiceEnabled) stopAudioPlayback();
-    });
-
-    if (!voiceEnabled) {
-      voiceToggleBtn.classList.add("muted");
-      voiceToggleBtn.textContent = "🔇 صامت";
-    }
-
-    // ---------- المحادثة الحية التفاعلية (Microphone / Barge-in) ----------
-    let liveVoiceMode = false;
-    let recognition = null;
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (SpeechRecognition) {
-      recognition = new SpeechRecognition();
-      recognition.lang = 'ar-SY';
-      recognition.continuous = true;
-      recognition.interimResults = true;
-
-      recognition.onstart = () => {
-        setOrbState(audioPlayer.paused ? "listening" : "speaking");
-      };
-
-      recognition.onresult = (event) => {
-        // ميزة المقاطعة الفورية (Barge-in): عند بدء كلامك يتوقف الصوت فوراً
-        if (!audioPlayer.paused) {
-          stopAudioPlayback();
-        }
-
-        let finalTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          }
-        }
-
-        if (finalTranscript.trim()) {
-          userInput.value = finalTranscript.trim();
-          handleSendMessage();
-        }
-      };
-
-      recognition.onerror = (e) => {
-        if (e.error === 'not-allowed') {
-          stopLiveMode();
-          alert("يرجى إعطاء صلاحية المايك في سفاري.");
-        }
-      };
-
-      recognition.onend = () => {
-        if (liveVoiceMode) {
-          setTimeout(() => {
-            try { recognition.start(); } catch (err) {}
-          }, 200);
-        } else {
-          setOrbState("idle");
-        }
-      };
-    }
-
-    function toggleLiveMode() {
-      unlockAudioForSafari();
-      if (!recognition) {
-        alert("التعرف على الصوت غير مدعوم على متصفحك.");
-        return;
-      }
-      liveVoiceMode = !liveVoiceMode;
-      if (liveVoiceMode) {
-        stopAudioPlayback();
-        try { recognition.start(); } catch (e) {}
-        setOrbState("listening");
-      } else {
-        stopLiveMode();
-      }
-    }
-
-    function stopLiveMode() {
-      liveVoiceMode = false;
-      try { recognition.stop(); } catch (e) {}
-      setOrbState("idle");
-    }
-
-    // الضغط على النقطة الملونة في المنتصف يبدأ أو يوقف المحادثة الحية
-    centerOrb.addEventListener("click", () => {
-      // إذا كان عبود يتكلم، الضغط يقاطع الصوت مباشرة
-      if (!audioPlayer.paused) {
-        stopAudioPlayback();
-      } else {
-        toggleLiveMode();
-      }
-    });
-
-    document.getElementById("mic-btn").addEventListener("click", toggleLiveMode);
-
-    // ---------- إرسال وتول
+    const API_STORAGE_KEY = "abboud_gemi
