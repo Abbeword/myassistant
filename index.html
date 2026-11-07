@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="خَيّو الحمصي">
-  <title>خَيّو الحمصي - صوت نقي</title>
+  <title>خَيّو الحمصي - gemini-flash-latest</title>
   <style>
     :root {
       --primary: #059669;
@@ -62,7 +62,7 @@
     }
 
     .title-group h1 { font-size: 16px; font-weight: 700; }
-    .title-group p { font-size: 12px; color: #6b7280; }
+    .title-group p { font-size: 11px; color: #6b7280; font-family: monospace; }
 
     .header-actions { display: flex; gap: 6px; align-items: center; }
 
@@ -105,7 +105,7 @@
     }
 
     .bubble {
-      max-width: 82%;
+      max-width: 85%;
       padding: 12px 16px;
       border-radius: 18px;
       font-size: 15px;
@@ -121,6 +121,12 @@
       border: 1px solid #e5e7eb;
     }
 
+    .bubble.error-bubble {
+      background: #fef2f2;
+      border: 1px solid #f87171;
+      color: #991b1b;
+    }
+
     .bubble.user {
       align-self: flex-end;
       background: var(--chat-user);
@@ -134,6 +140,21 @@
       display: block;
       margin-top: 4px;
       text-align: left;
+    }
+
+    .error-code {
+      display: block;
+      background: #450a0a;
+      color: #fecaca;
+      padding: 8px;
+      border-radius: 6px;
+      margin-top: 6px;
+      font-family: monospace;
+      font-size: 11px;
+      direction: ltr;
+      text-align: left;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
 
     footer {
@@ -252,11 +273,10 @@
       <div class="avatar">🏛️</div>
       <div class="title-group">
         <h1>أبو عبدو الحمصي</h1>
-        <p>مساعدك ورفيقك الصادق</p>
+        <p>النموذج: gemini-flash-latest</p>
       </div>
     </div>
     <div class="header-actions">
-      <!-- زر التحكم البسيط بتشغيل/كتم الصوت -->
       <button class="voice-toggle-btn" id="voice-btn">
         <span id="voice-icon">🔊</span>
         <span id="voice-text">الصوت شغال</span>
@@ -276,7 +296,7 @@
   <div class="modal" id="api-modal">
     <div class="modal-content">
       <h2>مفتاح Gemini المجاني 🔑</h2>
-      <p>حط مفتاحك من Google AI Studio (بيبدأ بـ AIzaSy..). رح ينحفظ بجهازك فقط ومجاني بالكامل.</p>
+      <p>حط مفتاحك من Google AI Studio (بيبدأ بـ AIzaSy..). رح ينحفظ بجهازك فقط ومجاني 100%.</p>
       
       <div class="input-group">
         <input type="password" id="api-key-input" placeholder="AIzaSy...">
@@ -290,6 +310,9 @@
   </div>
 
   <script>
+    // ---------- إعدادات النموذج والذاكرة ----------
+    // تم التعديل إلى أحدث نموذج فلاش مباشر
+    const MODEL_NAME = "gemini-flash-latest";
     const API_STORAGE_KEY = "homsi_gemini_api_key";
     const CHAT_HISTORY_KEY = "homsi_gemini_history";
     const VOICE_PREF_KEY = "homsi_voice_enabled";
@@ -310,7 +333,7 @@
       localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(conversation));
     }
 
-    // ---------- نظام الصوت المحسّن (Google Arabic Audio + Fallback) ----------
+    // ---------- نظام الصوت والنطق ----------
     let currentAudio = null;
     const voiceBtn = document.getElementById("voice-btn");
     const voiceIcon = document.getElementById("voice-icon");
@@ -345,16 +368,14 @@
       }
     }
 
-    // تنظيف النص تماماً من أي رموز تعرقل القراءة
     function sanitizeForSpeech(raw) {
       return raw
-        .replace(/[*#_~`>\[\]\(\)\\]/g, '') // إزالة كل رموز الماركداون
-        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '') // إزالة الإيموجي
+        .replace(/[*#_~`>\[\]\(\)\\]/g, '')
+        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
         .replace(/\s+/g, ' ')
         .trim();
     }
 
-    // قراءة الرد كاملاً بدون تقطيع
     function playSpeech(text) {
       if (!voiceEnabled) return;
       stopAllAudio();
@@ -362,7 +383,6 @@
       const cleanText = sanitizeForSpeech(text);
       if (!cleanText) return;
 
-      // تجزئة النص إلى مقاطع قصيرة تناسب نبرة الصوت وتمنع انقطاعه في سفاري
       const chunks = [];
       const parts = cleanText.split(/([.،؟!؟\n]+)/);
       let temp = "";
@@ -384,17 +404,11 @@
         }
 
         const chunk = chunks[chunkIndex++];
-        
-        // المحاولة الأولى: استخدام صوت جوجل العربي الصافي (Google Voice Engine)
         const googleVoiceUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q=${encodeURIComponent(chunk)}`;
         
         currentAudio = new Audio(googleVoiceUrl);
         currentAudio.onended = playNextChunk;
-        
-        currentAudio.onerror = () => {
-          // المحاولة الاحتياطية المتقدمة: استخدام صوت الآيفون بعد تقسيمه لتفادي مشكلة الـ 10 ثواني
-          fallbackNativeSpeech(chunk, playNextChunk);
-        };
+        currentAudio.onerror = () => fallbackNativeSpeech(chunk, playNextChunk);
 
         currentAudio.play().catch(() => {
           fallbackNativeSpeech(chunk, playNextChunk);
@@ -404,7 +418,6 @@
       playNextChunk();
     }
 
-    // مشغل بديل فائق السلاسة لمتصفح سفاري في حال عدم توفر الصوت الشبكي
     function fallbackNativeSpeech(textChunk, onEndCallback) {
       if (!('speechSynthesis' in window) || !voiceEnabled) {
         if (onEndCallback) onEndCallback();
@@ -417,7 +430,7 @@
       utterance.pitch = 1.0;
 
       const voices = window.speechSynthesis.getVoices();
-      const bestVoice = voices.find(v => v.lang.startsWith('ar') && (v.name.includes('Maged') || v.name.includes('Tarik') || v.name.includes('Laila') || v.name.includes('Siri')));
+      const bestVoice = voices.find(v => v.lang.startsWith('ar'));
       if (bestVoice) utterance.voice = bestVoice;
 
       utterance.onend = onEndCallback;
@@ -426,7 +439,7 @@
       window.speechSynthesis.speak(utterance);
     }
 
-    // ---------- إدارة المفتاح والنافذة ----------
+    // ---------- نافذة المفتاح ----------
     const apiModal = document.getElementById("api-modal");
     const apiKeyInput = document.getElementById("api-key-input");
     const saveKeyBtn = document.getElementById("save-key-btn");
@@ -449,7 +462,7 @@
       apiKey = val;
       localStorage.setItem(API_STORAGE_KEY, apiKey);
       apiModal.style.display = "none";
-      addBotMessage("يا مية أهلاً وسهلاً بعيوني! حفظنا المفتاح وضبطنا الصوت على أعلى وضوح.. قلي شو اسمك لنبلش نسولف؟");
+      addBotMessage("يا مية أهلاً وسهلاً بعيوني! حفظنا المفتاح وتم ربط نموذج gemini-flash-latest بنجاح.. شو الأخبار عندك؟");
     });
 
     settingsBtn.addEventListener("click", () => {
@@ -462,17 +475,27 @@
       apiModal.style.display = "none";
     });
 
-    // ---------- واجهة الدردشة ----------
+    // ---------- الدردشة وعرض الأخطاء الكاملة ----------
     const chatBox = document.getElementById("chat-box");
     const userInput = document.getElementById("user-input");
     const sendBtn = document.getElementById("send-btn");
     const micBtn = document.getElementById("mic-btn");
 
-    function addMessageToUI(sender, text) {
+    function addMessageToUI(sender, text, isHtml = false) {
       const bubble = document.createElement("div");
       bubble.className = `bubble ${sender}`;
       const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-      bubble.innerHTML = `${text} <span class="time">${timeStr}</span>`;
+      
+      if (isHtml) {
+        bubble.innerHTML = `${text} <span class="time">${timeStr}</span>`;
+      } else {
+        bubble.textContent = text;
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "time";
+        timeSpan.textContent = timeStr;
+        bubble.appendChild(timeSpan);
+      }
+      
       chatBox.appendChild(bubble);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
@@ -482,7 +505,13 @@
       playSpeech(text);
     }
 
-    // ---------- إرسال الرسالة إلى Gemini ----------
+    // دالة مخصصة لعرض رسالة الخطأ كاملة بدون قص
+    function displayFullError(title, detail) {
+      const formatted = `⚠️ <b>${title}</b><div class="error-code">${detail}</div>`;
+      addMessageToUI("bot error-bubble", formatted, true);
+    }
+
+    // ---------- إرسال الطلب لـ Google Gemini ----------
     async function sendMessage() {
       const text = userInput.value.trim();
       if (!text) return;
@@ -492,7 +521,6 @@
         return;
       }
 
-      // إلغاء أي صوت شغال حالياً فور إرسال رسالة جديدة
       stopAllAudio();
 
       addMessageToUI("user", text);
@@ -508,7 +536,7 @@
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
         
         const payload = {
           contents: conversation.slice(-12),
@@ -526,8 +554,15 @@
         const data = await response.json();
         loadingBubble.remove();
 
-        if (data.error) {
-          addBotMessage(`يا خاي في مشكلة بمفتاح جيميني: ${data.error.message}`);
+        // فحص في حال ردت جوجل بخطأ (مثل 400، 403، 404، 429)
+        if (!response.ok || data.error) {
+          const fullErrJson = JSON.stringify(data.error || data, null, 2);
+          displayFullError(`خطأ من الـ API (رمز: ${response.status})`, fullErrJson);
+          return;
+        }
+
+        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+          displayFullError("استجابة غير متوقعة من Gemini", JSON.stringify(data, null, 2));
           return;
         }
 
@@ -539,7 +574,7 @@
 
       } catch (err) {
         if (loadingBubble) loadingBubble.remove();
-        addBotMessage("صار مشكلة بالاتصال بالنت يا غالي، جرب كمان مرة.");
+        displayFullError("خطأ اتصال بالشبكة أو كود العميل", err.stack || err.message || String(err));
       }
     }
 
@@ -548,7 +583,7 @@
       if (e.key === "Enter") sendMessage();
     });
 
-    // ---------- مايكروفون الآيفون ----------
+    // ---------- المايكروفون ----------
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
@@ -557,7 +592,12 @@
 
       recognition.onstart = () => micBtn.classList.add("recording");
       recognition.onend = () => micBtn.classList.remove("recording");
-      recognition.onerror = () => micBtn.classList.remove("recording");
+      recognition.onerror = (e) => {
+        micBtn.classList.remove("recording");
+        if (e.error !== "no-speech") {
+          displayFullError("خطأ في لاقط الصوت", e.error);
+        }
+      };
 
       recognition.onresult = (e) => {
         userInput.value = e.results[0][0].transcript;
